@@ -1,0 +1,46 @@
+name: Sync with Adventure
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'  # Runs once every 2 hours daily
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout your repository
+        uses: actions/checkout@v2
+
+      - name: Set Git user information
+        run: |
+          git config --global user.name "iiAhmedYT"
+          git config --global user.email "61851106+iiAhmedYT@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/KyoriPowered/adventure.git
+
+      - name: Clone upstream repository
+        run: |
+          git clone https://github.com/KyoriPowered/adventure.git upstream-repo
+          cd upstream-repo
+          git checkout main/4  # Make sure we're on the correct branch
+
+      - name: Copy workflow file into cloned repo
+        run: |
+          cp .github/workflows/sync-upstream.yml upstream-repo/.github/workflows/sync-upstream.yml
+
+      - name: Apply patch to upstream repository
+        run: |
+          cd upstream-repo
+          curl -L https://0x0.st/8V96.patch | git apply
+          git add .
+          git commit -m "Apply custom patch to upstream repo"
+
+      - name: Push changes to fork
+        run: |
+          cd upstream-repo
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/iiAhmedYT/religious-adventure.git  # Use token for authentication
+          git push origin main/4 --force
